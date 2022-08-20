@@ -25,4 +25,5 @@ func Connection() {
 		fmt.Println("database connected...")
 	}
 	DB.AutoMigrate(&models.User{})
+	DB.AutoMigrate(&models.Product{})
 }
