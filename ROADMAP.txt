@@ -1,0 +1,8 @@
+Technology
+1. Learning Go basics, data structures.
+2. Learning basics and working principle of Fiber & concurrency of Go.
+
+E-Commerce Backend
+1. User: registration, login, logout, authentication.
+2. User types: admin, sellers, customers.
+3. CRUD of product details with approvals required from admin.
