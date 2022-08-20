@@ -1,8 +1,8 @@
 # go-ecommerce
 
 ## APIs created on
-Golang <i class="fa-brands fa-golang"></i>
-Fiber
+### Golang
+### Fiber
 GORM
 MySQL.
 Happy Hacking.
