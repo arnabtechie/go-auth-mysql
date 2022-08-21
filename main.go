@@ -7,6 +7,7 @@ import (
 	"github.com/arnabtechie/go-ecommerce/routes"
 	"github.com/arnabtechie/go-ecommerce/sql_connector"
 	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -16,6 +17,10 @@ func main() {
 			"success": true,
 		})
 	})
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 	middlewares.FiberMiddleware(app)
 	sql_connector.Connection()
 	routes.GenericRoutes(app)

@@ -8,8 +8,7 @@ import (
 
 type Product struct {
 	gorm.Model
-	ID             int64   `gorm:"primaryKey;autoIncrement:true"`
-	UUID           string  `gorm:"not null;unique"`
+	ID             string  `gorm:"primaryKey"`
 	ProductName    string  `gorm:"not null"`
 	ProductDetails string  `gorm:"not null"`
 	Price          float64 `gorm:"not null"`

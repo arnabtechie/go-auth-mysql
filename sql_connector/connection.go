@@ -1,16 +1,19 @@
 package sql_connector
 
 import (
-	"fmt"
+	"log"
+	"os"
 
 	"github.com/arnabtechie/go-ecommerce/models"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
+var DB *gorm.DB
+
 func Connection() {
-	connection_string := "root:arnabroot@tcp(127.0.0.1:3306)/ecommerce?charset=utf8&parseTime=True&loc=Local"
-	DB, err := gorm.Open(mysql.New(mysql.Config{
+	connection_string := os.Getenv("DB_CONNECTION_STRING")
+	db, err := gorm.Open(mysql.New(mysql.Config{
 		DSN:                       connection_string,
 		DefaultStringSize:         256,
 		DisableDatetimePrecision:  true,
@@ -19,11 +22,11 @@ func Connection() {
 		SkipInitializeWithVersion: false,
 	}), &gorm.Config{})
 	if err != nil {
-		fmt.Println(err.Error())
-		panic("cannot connect to database")
+		log.Panic(err.Error())
+		panic("cannot connect to database...")
 	} else {
-		fmt.Println("database connected...")
+		log.Println("database connected...")
 	}
-	DB.AutoMigrate(&models.User{})
-	DB.AutoMigrate(&models.Product{})
+	db.AutoMigrate(&models.User{}, &models.Product{})
+	DB = db
 }
