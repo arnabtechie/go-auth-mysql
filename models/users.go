@@ -10,19 +10,22 @@ import (
 type User struct {
 	gorm.Model
 	ID          string `gorm:"primaryKey"`
-	FirstName   string `gorm:"not null"`
-	LastName    string `gorm:"not null"`
-	Password    string `gorm:"not null"`
-	Email       string `gorm:"not null;unique"`
-	Phone       string
-	City        string
-	State       string
-	FullAddress string
-	LastLogin   time.Time
-	IsAdmin     bool `gorm:"not null;default: 0"`
-	IsSeller    bool `gorm:"not null;default: 0"`
+	FirstName   string `gorm:"not null" json:"first_name" validate:"required,gte=1"`
+	LastName    string `gorm:"not null" json:"last_name" validate:"required,gte=1"`
+	Password    string `gorm:"not null" json:"password" validate:"required,gte=4"`
+	Email       string `gorm:"unique" json:"email" validate:"required,email"`
+	City        string `json:"city,omitempty"`
+	State       string `json:"state,omitempty"`
+	FullAddress string `json:"full_address,omitempty"`
+	IsAdmin     bool   `gorm:"not null;default: 0"`
+	IsSeller    bool   `gorm:"not null;default: 0"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+}
+
+type SignIn struct {
+	Email    string `json:"email" validate:"required,email,lte=255"`
+	Password string `json:"password" validate:"required,lte=255"`
 }
 
 func Hash(password string) ([]byte, error) {

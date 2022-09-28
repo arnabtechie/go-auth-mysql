@@ -1,24 +1,26 @@
 package controllers
 
 import (
-	"time"
+	"errors"
 
 	"github.com/arnabtechie/go-ecommerce/models"
+	"github.com/arnabtechie/go-ecommerce/sql_connector"
 	"github.com/arnabtechie/go-ecommerce/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 func Register(c *fiber.Ctx) error {
 
 	register := &models.User{}
 
-	// DB := sql_connector.DB
+	DB := sql_connector.DB
 
 	if err := c.BodyParser(register); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": true,
-			"msg":   err.Error(),
+			"success": false,
+			"errors":  err.Error(),
 		})
 	}
 
@@ -31,14 +33,13 @@ func Register(c *fiber.Ctx) error {
 		})
 	}
 	register.ID = uuid.NewString()
-	register.LastLogin = time.Now()
-	// err := DB.Model(&models.User{}).Create(&register)
-	// if err != nil {
-	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-	// 		"success": false,
-	// 		"message": err,
-	// 	})
-	// }
+
+	if err := DB.Table("users").Create(&register).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"errors":  err,
+		})
+	}
 	return c.JSON(fiber.Map{
 		"success": true,
 		"data": fiber.Map{
@@ -51,6 +52,27 @@ func Register(c *fiber.Ctx) error {
 }
 
 func Login(c *fiber.Ctx) error {
+	signIn := &models.SignIn{}
+
+	if err := c.BodyParser(signIn); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": true,
+			"msg":   err.Error(),
+		})
+	}
+
+	DB := sql_connector.DB
+	result := &models.User{}
+
+	err := DB.Table("users").Where("email = ?", signIn.Email).First(result)
+
+	if err.Error != nil || errors.Is(err.Error, gorm.ErrRecordNotFound) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"errors":  err,
+		})
+	}
+
 	return c.JSON(fiber.Map{
 		"success": true,
 	})

@@ -3,6 +3,7 @@ package utils
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func NewValidator() *validator.Validate {
@@ -27,4 +28,19 @@ func ValidatorErrors(err error) map[string]string {
 	}
 
 	return fields
+}
+
+func NormalizePassword(p string) []byte {
+	return []byte(p)
+}
+
+func ComparePasswords(hashedPwd, inputPwd string) bool {
+	byteHash := NormalizePassword(hashedPwd)
+	byteInput := NormalizePassword(inputPwd)
+
+	if err := bcrypt.CompareHashAndPassword(byteHash, byteInput); err != nil {
+		return false
+	}
+
+	return true
 }
