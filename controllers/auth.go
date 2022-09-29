@@ -1,14 +1,12 @@
 package controllers
 
 import (
-	"errors"
-
 	"github.com/arnabtechie/go-ecommerce/models"
 	"github.com/arnabtechie/go-ecommerce/sql_connector"
 	"github.com/arnabtechie/go-ecommerce/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
+	"github.com/jinzhu/gorm"
 )
 
 func Register(c *fiber.Ctx) error {
@@ -52,7 +50,13 @@ func Register(c *fiber.Ctx) error {
 }
 
 func Login(c *fiber.Ctx) error {
-	signIn := &models.SignIn{}
+
+	type SignIn struct {
+		Email    string `json:"email" validate:"required,email,lte=255"`
+		Password string `json:"password" validate:"required,lte=255"`
+	}
+
+	signIn := &SignIn{}
 
 	if err := c.BodyParser(signIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -62,19 +66,32 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	DB := sql_connector.DB
-	result := &models.User{}
 
-	err := DB.Table("users").Where("email = ?", signIn.Email).First(result)
+	type Result struct {
+		ID       string `json:"id"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
 
-	if err.Error != nil || errors.Is(err.Error, gorm.ErrRecordNotFound) {
+	result := &Result{}
+
+	if err := DB.Table("users").Select("id", "email", "password").Where("email = ?", signIn.Email).First(result).Error; gorm.IsRecordNotFoundError(err) {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"errors":  err,
 		})
 	}
 
+	if result.Email == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"errors":  "Username or password incorrect",
+		})
+	}
+
 	return c.JSON(fiber.Map{
 		"success": true,
+		"data":    result,
 	})
 }
 

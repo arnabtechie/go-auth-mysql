@@ -23,11 +23,6 @@ type User struct {
 	UpdatedAt   time.Time
 }
 
-type SignIn struct {
-	Email    string `json:"email" validate:"required,email,lte=255"`
-	Password string `json:"password" validate:"required,lte=255"`
-}
-
 func Hash(password string) ([]byte, error) {
 	return bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 }
