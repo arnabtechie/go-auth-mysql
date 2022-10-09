@@ -1,10 +1,14 @@
 package controllers
 
 import (
+	"os"
+	"time"
+
 	"github.com/arnabtechie/go-ecommerce/models"
 	"github.com/arnabtechie/go-ecommerce/sql_connector"
 	"github.com/arnabtechie/go-ecommerce/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 )
@@ -89,12 +93,57 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(fiber.Map{
+	match := models.VerifyPassword(result.Password, signIn.Password)
+
+	if match == false {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"errors":  "Username or password incorrect",
+		})
+	}
+
+	expirationTime := time.Now().Add(120 * time.Minute)
+
+	type Claims struct {
+		ID string `json:"id"`
+		jwt.StandardClaims
+	}
+
+	claims := &Claims{
+		ID: result.ID,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expirationTime.Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"errors":  err.Error(),
+		})
+	}
+
+	cookie := new(fiber.Cookie)
+
+	cookie.Value = tokenString
+
+	c.Cookie(cookie)
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
-		"data":    result,
+		"data": fiber.Map{
+			"email": result.Email,
+			"id":    result.ID,
+		},
+		"token": tokenString,
 	})
 }
 
 func Logout(c *fiber.Ctx) error {
-	return c.SendStatus(200)
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    "User logged out",
+	})
 }

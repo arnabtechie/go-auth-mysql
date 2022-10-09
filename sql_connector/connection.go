@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/arnabtechie/go-ecommerce/models"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -27,6 +26,5 @@ func Connection() {
 	} else {
 		log.Println("database connected...")
 	}
-	db.AutoMigrate(&models.User{}, &models.Product{})
 	DB = db
 }
