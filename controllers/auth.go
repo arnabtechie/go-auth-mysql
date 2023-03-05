@@ -3,7 +3,7 @@ package controllers
 import (
 	"log"
 
-	connection "github.com/arnabtechie/go-ecommerce/sql_connector"
+	"github.com/arnabtechie/go-ecommerce/connection"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"

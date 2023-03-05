@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 
+	"github.com/arnabtechie/go-ecommerce/connection"
 	"github.com/arnabtechie/go-ecommerce/middlewares"
 	"github.com/arnabtechie/go-ecommerce/routes"
-	connection "github.com/arnabtechie/go-ecommerce/sql_connector"
 	"github.com/gofiber/fiber/v2"
 )
 
