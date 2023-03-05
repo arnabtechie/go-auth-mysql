@@ -1,30 +1,35 @@
-package sql_connector
+package connection
 
 import (
-	"log"
-	"os"
+	"database/sql"
+	"fmt"
 
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
+	_ "github.com/go-sql-driver/mysql"
 )
 
-var DB *gorm.DB
+var DB *sql.DB
 
-func Connection() {
-	connection_string := os.Getenv("DB_CONNECTION_STRING")
-	db, err := gorm.Open(mysql.New(mysql.Config{
-		DSN:                       connection_string,
-		DefaultStringSize:         256,
-		DisableDatetimePrecision:  true,
-		DontSupportRenameIndex:    true,
-		DontSupportRenameColumn:   true,
-		SkipInitializeWithVersion: false,
-	}), &gorm.Config{})
+func InitDB() error {
+	db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/ecommerce")
 	if err != nil {
-		log.Panic(err.Error())
-		panic("cannot connect to database...")
-	} else {
-		log.Println("database connected...")
+		return err
 	}
+
+	// Set the maximum number of connections in the pool
+	db.SetMaxOpenConns(10)
+
+	// Set the maximum number of idle connections in the pool
+	db.SetMaxIdleConns(5)
+
+	// Ensure the connection is valid
+	err = db.Ping()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Database connection established")
+
 	DB = db
+
+	return nil
 }

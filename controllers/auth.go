@@ -1,20 +1,24 @@
 package controllers
 
 import (
-	"github.com/arnabtechie/go-ecommerce/middlewares"
-	"github.com/arnabtechie/go-ecommerce/models"
-	"github.com/arnabtechie/go-ecommerce/sql_connector"
-	"github.com/arnabtechie/go-ecommerce/utils"
+	"log"
+
+	connection "github.com/arnabtechie/go-ecommerce/sql_connector"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/jinzhu/gorm"
 )
 
 func Register(c *fiber.Ctx) error {
 
-	register := &models.User{}
+	type User struct {
+		UUID     string `json:"uuid"`
+		FullName string `json:"full_name" validate:"required,lte=255"`
+		Email    string `json:"email" validate:"required,email,lte=255"`
+		Password string `json:"password" validate:"required,lte=255"`
+	}
 
-	DB := sql_connector.DB
+	register := &User{}
 
 	if err := c.BodyParser(register); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -23,30 +27,32 @@ func Register(c *fiber.Ctx) error {
 		})
 	}
 
-	validate := utils.NewValidator()
+	type CreateUserRequest struct {
+		Name     string `json:"name" validate:"required"`
+		Email    string `json:"email" validate:"required,email"`
+		Password string `json:"password" validate:"required,min=8"`
+	}
 
-	if err := validate.Struct(register); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	v := validator.New()
+
+	if err := v.Struct(register); err != nil {
+		return c.Status(400).JSON(fiber.Map{
 			"success": false,
-			"message": utils.ValidatorErrors(err),
+			"errors":  err.Error(),
 		})
 	}
-	register.ID = uuid.NewString()
 
-	if err := DB.Table("users").Create(&register).Error; err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"errors":  err,
-		})
+	rows, err := connection.DB.Query("select * from users where email=?", register.Email)
+	if err != nil {
+		return err
 	}
-	return c.JSON(fiber.Map{
+	defer rows.Close()
+
+	register.UUID = uuid.NewString()
+	log.Println(*register)
+
+	return c.Status(201).JSON(fiber.Map{
 		"success": true,
-		"data": fiber.Map{
-			"id":        register.ID,
-			"firstName": register.FirstName,
-			"lastName":  register.LastName,
-			"email":     register.Email,
-		},
 	})
 }
 
@@ -66,55 +72,17 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
-	DB := sql_connector.DB
+	v := validator.New()
 
-	result := &models.Result{}
-
-	if err := DB.Table("users").Select("id", "email", "password").Where("email = ?", signIn.Email).First(result).Error; gorm.IsRecordNotFoundError(err) {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"errors":  err,
-		})
-	}
-
-	if result.Email == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"errors":  "Invalid credentials",
-		})
-	}
-
-	match := models.VerifyPassword(result.Password, signIn.Password)
-
-	if !match {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"errors":  "Invalid credentials",
-		})
-	}
-
-	tokenString, err := middlewares.CreateJwt(result.ID)
-
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	if err := v.Struct(signIn); err != nil {
+		return c.Status(400).JSON(fiber.Map{
 			"success": false,
 			"errors":  err.Error(),
 		})
 	}
 
-	cookie := new(fiber.Cookie)
-
-	cookie.Value = tokenString
-
-	c.Cookie(cookie)
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+	return c.Status(200).JSON(fiber.Map{
 		"success": true,
-		"data": fiber.Map{
-			"email": result.Email,
-			"id":    result.ID,
-		},
-		"token": tokenString,
 	})
 }
 
