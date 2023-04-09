@@ -122,7 +122,14 @@ func Login(c *fiber.Ctx) error {
 	}
 	var user User
 
-	err := db.DB.QueryRow("select * from users where email = ?", req.Email).Scan(&user.ID, &user.FullName, &user.Email, &user.Password, &user.CreatedAt)
+	err := db.DB.QueryRow("select * from users where email = ?", req.Email).Scan(
+		&user.ID,
+		&user.FullName,
+		&user.Email,
+		&user.Password,
+		&user.CreatedAt,
+	)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return c.Status(400).JSON(fiber.Map{
