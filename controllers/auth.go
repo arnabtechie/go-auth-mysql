@@ -1,14 +1,17 @@
 package controllers
 
 import (
+	"database/sql"
 	"log"
 	"os"
+	"time"
 
 	"go-auth-mysql/db"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -87,5 +90,77 @@ func Register(c *fiber.Ctx) error {
 		"email":     req.Email,
 		"full_name": req.FullName,
 		"token":     tokenString,
+	})
+}
+
+func Login(c *fiber.Ctx) error {
+	type LoginRequest struct {
+		Email    string `json:"email" validate:"required,email"`
+		Password string `json:"password" validate:"required,min=6"`
+	}
+	req := new(LoginRequest)
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(500).JSON(fiber.Map{"message": "Invalid request body", "errors": err.Error()})
+	}
+
+	validate := validator.New()
+	if err := validate.Struct(req); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Validation failed",
+			"errors":  err.Error(),
+		})
+	}
+	type User struct {
+		FullName  string `json:"full_name"`
+		Email     string `json:"email"`
+		Password  string `json:"password"`
+		ID        int    `json:"id"`
+		CreatedAt string `json:"created_at"`
+	}
+	var user User
+
+	err := db.DB.QueryRow("select * from users where email = ?", req.Email).Scan(&user.ID, &user.FullName, &user.Email, &user.Password, &user.CreatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return c.Status(400).JSON(fiber.Map{
+				"message": "Unauthorized",
+				"errors":  "Invalid credentials",
+			})
+		} else {
+			return c.Status(500).JSON(fiber.Map{
+				"message": "Internal Server Error",
+				"errors":  err.Error(),
+			})
+		}
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Unauthorized",
+			"errors":  "Invalid credentials",
+		})
+
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":  user.ID,
+		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
+		"jti": uuid.NewString(),
+	})
+
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "Failed to create JWT token",
+			"errors":  err.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"email":      user.Email,
+		"full_name":  user.FullName,
+		"created_at": user.CreatedAt,
+		"id":         user.ID,
+		"token":      tokenString,
 	})
 }
