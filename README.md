@@ -1,9 +1,8 @@
-# go-ecommerce
+# go-mysql-auth
 
 ## APIs created on
 ### Golang
 ### Fiber ⚡
-### GORM
 ### MySQL
 
 ### Install Air for auto refresh
