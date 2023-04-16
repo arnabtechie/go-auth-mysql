@@ -17,14 +17,14 @@ func JWTMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			return c.Status(401).JSON(fiber.Map{
 				"message": "Authorization header missing",
 			})
 		}
 
 		authHeaderParts := strings.Split(authHeader, " ")
 		if len(authHeaderParts) != 2 || strings.ToLower(authHeaderParts[0]) != "bearer" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			return c.Status(401).JSON(fiber.Map{
 				"message": "Invalid authorization header format",
 			})
 		}
@@ -36,27 +36,27 @@ func JWTMiddleware() fiber.Handler {
 		})
 
 		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			return c.Status(401).JSON(fiber.Map{
 				"message": "Invalid token",
 			})
 		}
 
 		if !token.Valid {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			return c.Status(401).JSON(fiber.Map{
 				"message": "Invalid token",
 			})
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			return c.Status(401).JSON(fiber.Map{
 				"message": "Invalid token claims",
 			})
 		}
 
 		userID, ok := claims["id"].(float64)
 		if !ok {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			return c.Status(401).JSON(fiber.Map{
 				"message": "Invalid user ID in token",
 			})
 		}
@@ -67,12 +67,12 @@ func JWTMiddleware() fiber.Handler {
 
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				return c.Status(401).JSON(fiber.Map{
 					"message": "User not found",
 				})
 			} else {
 				log.Println("Error querying database:", err)
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				return c.Status(500).JSON(fiber.Map{
 					"message": "Internal server error",
 				})
 			}
