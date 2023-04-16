@@ -9,6 +9,13 @@ import (
 
 var DB *sql.DB
 
+type User struct {
+	FullName  string `json:"full_name"`
+	Email     string `json:"email"`
+	ID        int    `json:"id"`
+	CreatedAt string `json:"created_at"`
+}
+
 func Setup() {
 
 	cfg := mysql.Config{

@@ -174,3 +174,10 @@ func Login(c *fiber.Ctx) error {
 		"token":      tokenString,
 	})
 }
+
+func Profile(c *fiber.Ctx) error {
+
+	user := c.Locals("user").(db.User)
+
+	return c.JSON(user)
+}
