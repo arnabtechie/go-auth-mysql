@@ -1,6 +1,12 @@
-# go-auth-mysql
+# Go Authentication with MySQL
 
-This is a basic authentication system using Golang Fiber and MySQL.
+This is a simple Go project for user authentication using the Fiber web framework and MySQL database.
+
+## Technologies Used
+
+- Go
+- Fiber
+- MySQL
 
 ## Installation
 
